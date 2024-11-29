@@ -6,10 +6,10 @@ $CFG = new stdClass();
 // Configuración de base de datos
 $CFG->dbtype    = 'mysqli';                   
 $CFG->dblibrary = 'native';                  
-$CFG->dbhost    = 'https://practicahttpsmfb.ddns.net';                
+$CFG->dbhost    = 'localhost';                
 $CFG->dbname    = 'moodle';    
 $CFG->dbuser    = 'user';      
-$CFG->dbpass    = 'userpassword';
+$CFG->dbpass    = 'user';
 $CFG->prefix    = 'mdl_'; 
 $CFG->dboptions = array(                    
     'dbpersist' => 0,                        

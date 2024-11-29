@@ -3,13 +3,7 @@
 # Configurar para mostrar los comandos
 set -ex
 
-# Si el archivo .env existe, lo cargamos
-if [ -f .env ]; then
-    source .env
-else
-    echo ".env no encontrado. Asegúrate de tener un archivo .env con las variables necesarias."
-    exit 1
-fi
+source .env
 
 # Actualizamos el sistema
 sudo apt update
@@ -81,32 +75,33 @@ sudo chmod 644 "$MOODLE_DIRECTORY/config.php"
 sudo chown -R www-data:www-data "$MOODLE_DIRECTORY"
 sudo chown -R www-data:www-data /var/www/moodledata
 
-# Reiniciar Apache después de las configuraciones de Moodle
-sudo systemctl restart apache2
-
 # Crear la base de datos de Moodle
 mysql -u root <<< "DROP DATABASE IF EXISTS $MOODLE_DB_NAME"
 mysql -u root <<< "CREATE DATABASE $MOODLE_DB_NAME"
 
-# Crear el usuario y asignar permisos a la base de datos
-mysql -u root <<< "DROP USER IF EXISTS '$MOODLE_DB_USER'@'%'"
-mysql -u root <<< "CREATE USER '$MOODLE_DB_USER'@'%' IDENTIFIED BY '$MOODLE_DB_PASSWORD'"
-mysql -u root <<< "GRANT SELECT,INSERT,UPDATE,DELETE,CREATE TEMPORARY TABLES,DROP,INDEX,ALTER ON $MOODLE_DB_NAME.* TO '$MOODLE_DB_USER'@'%'"
+# Crear el usuario y asignar permisos a la base de datos (usando localhost)
+mysql -u root <<< "DROP USER IF EXISTS '$MOODLE_DB_USER'@'localhost'"
+mysql -u root <<< "CREATE USER '$MOODLE_DB_USER'@'localhost' IDENTIFIED BY '$MOODLE_DB_PASSWORD'"
+mysql -u root <<< "GRANT SELECT,INSERT,UPDATE,DELETE,CREATE TEMPORARY TABLES,DROP,INDEX,ALTER ON $MOODLE_DB_NAME.* TO '$MOODLE_DB_USER'@'localhost'"
 mysql -u root <<< "FLUSH PRIVILEGES"
 
 # Verificamos que el cambio se aplicó correctamente
 php -i | grep max_input_vars
 
-# Reiniciar Apache nuevamente para asegurarse de que todos los cambios se apliquen
+# Ejecutar la instalación de la base de datos de Moodle (esto configura la base de datos y el administrador)
+echo "Ejecutando la instalación de la base de datos de Moodle..."
+sudo -u www-data /usr/bin/php /var/www/html/moodle/admin/cli/install_database.php \
+  --agree-license \
+  --admin-user=admin \
+  --admin-pass=adminpassword \
+  --dbname=$MOODLE_DB_NAME \
+  --dbuser=$MOODLE_DB_USER \
+  --dbpass=$MOODLE_DB_PASSWORD
+
+# Reiniciar Apache después de las configuraciones de Moodle
 sudo systemctl restart apache2
 
 # Reiniciar el servicio de MySQL
 sudo service mysql restart
 
-### Limpiar archivos temporales y caché
-
-# Limpiar el caché de apt
-sudo apt-get clean
-sudo apt-get autoclean
-sudo apt-get autoremove
-
+echo "Despliegue completo."
