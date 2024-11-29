@@ -16,9 +16,7 @@ apt install apache2 -y
 a2enmod rewrite
 
 # Instalamos PHP y el módulo de Apache para PHP
-apt install php libapache2-mod-php php-mysql php-xml php-zip php-mbstring php-curl php-intl -y
-a2enmod php
-
+apt install php libapache2-mod-php php-mysql 
 # Copiamos el archivo de configuración de Apache
 
 cp ../conf/000-default.conf /etc/apache2/sites-available/

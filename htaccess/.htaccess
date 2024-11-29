@@ -1,10 +1,12 @@
-# Aumentar max_input_vars para Moodle
+# Configuración de PHP: aumentar max_input_vars si es necesario
 php_value max_input_vars 5000
 
-# Configuraciones de reescritura u otras configuraciones de Apache si las necesitas
+# Configuración de reescritura para Moodle
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # Redirigir tráfico no deseado hacia index.php
     RewriteRule ^index\.php$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

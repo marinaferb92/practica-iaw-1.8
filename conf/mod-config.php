@@ -6,7 +6,7 @@ $CFG = new stdClass();
 // Configuración de base de datos
 $CFG->dbtype    = 'mysqli';                   
 $CFG->dblibrary = 'native';                  
-$CFG->dbhost    = 'localhost';                
+$CFG->dbhost    = 'https://practicahttpsmfb.ddns.net';                
 $CFG->dbname    = 'moodle';    
 $CFG->dbuser    = 'user';      
 $CFG->dbpass    = 'userpassword';
@@ -16,7 +16,7 @@ $CFG->dboptions = array(
     'dbsocket'  => 0 
 );
 // Configuración de Moodle
-$CFG->wwwroot   = 'https://practicahttpsmfb.ddns.net/';         
+$CFG->wwwroot   = 'https://practicahttpsmfb.ddns.net';         
 $CFG->dataroot  = '/var/www/moodledata';     
 $CFG->admin     = 'admin';                   
 
