@@ -17,6 +17,23 @@ sudo a2enmod php8.3
 # Recargamos la configuración de Apache para aplicar los cambios
 sudo systemctl reload apache2
 
+# Modificar max_input_vars en ambos php.ini (para Apache y CLI)
+PHP_INI_PATH_APACHE="/etc/php/8.3/apache2/php.ini"
+PHP_INI_PATH_CLI="/etc/php/8.3/cli/php.ini"
+
+# Verificamos si la configuración de max_input_vars ya está correcta, y si no, la modificamos
+for PHP_INI_PATH in $PHP_INI_PATH_APACHE $PHP_INI_PATH_CLI; do
+    if ! grep -q "max_input_vars = 5000" $PHP_INI_PATH; then
+        echo "max_input_vars = 5000" | sudo tee -a $PHP_INI_PATH
+        echo "max_input_vars configurado a 5000 en $PHP_INI_PATH"
+    else
+        echo "max_input_vars ya está configurado correctamente en $PHP_INI_PATH."
+    fi
+done
+
+# Recargamos Apache para aplicar la nueva configuración de PHP
+sudo systemctl restart apache2
+
 # Instalación y configuración de Moodle
 # Eliminar cualquier descarga previa de Moodle
 rm -rf /tmp/moodle-latest-405.tgz*
@@ -73,6 +90,7 @@ sudo chmod 644 "$MOODLE_DIRECTORY/config.php"
 
 # Cambiar los permisos para el directorio de Moodle y Moodle Data
 sudo chown -R www-data:www-data "$MOODLE_DIRECTORY"
+sudo chmod -R 755 /var/www/html/moodle
 sudo chown -R www-data:www-data /var/www/moodledata
 
 # Crear la base de datos de Moodle
@@ -91,17 +109,12 @@ php -i | grep max_input_vars
 # Ejecutar la instalación de la base de datos de Moodle (esto configura la base de datos y el administrador)
 echo "Ejecutando la instalación de la base de datos de Moodle..."
 sudo -u www-data /usr/bin/php /var/www/html/moodle/admin/cli/install_database.php \
-  --agree-license \
-  --admin-user=admin \
-  --admin-pass=adminpassword \
-  --dbname=$MOODLE_DB_NAME \
-  --dbuser=$MOODLE_DB_USER \
-  --dbpass=$MOODLE_DB_PASSWORD
-
-# Reiniciar Apache después de las configuraciones de Moodle
-sudo systemctl restart apache2
-
-# Reiniciar el servicio de MySQL
-sudo service mysql restart
-
-echo "Despliegue completo."
+    --agree-license \
+    --adminuser=admin \
+    --adminpass=adminpassword \
+    --adminemail=admin@example.com \
+    --lang=es \
+    --fullname="Sitio Moodle" \
+    --shortname="Moodle" \
+    --summary="Moodle para fines educativos" \
+    --supportemail="soporte@example.com"
