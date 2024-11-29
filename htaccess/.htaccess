@@ -1,21 +1,10 @@
-# Configuración de PHP: aumentar max_input_vars si es necesario
-php_value max_input_vars 5000
-
-# Bloquear acceso a archivos sensibles
-<FilesMatch "^\.">
-  Order Deny,Allow
-  Deny from all
-</FilesMatch>
-
-# Desactivar la ejecución de scripts PHP solo en directorios donde no se necesite
-# php_flag engine off  # Asegúrate de que esto solo se aplique en directorios donde no se necesite PHP
-
-# Reescritura de URLs para Moodle
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
 RewriteEngine On
-RewriteBase /moodle/
-
-# No reescribir para rutas de administración
-RewriteRule ^admin/.*$ - [L]
-
-# Asegurarse de que todas las demás URLs se redirijan correctamente
-RewriteRule ^(.*)$ /moodle/$1 [L]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
