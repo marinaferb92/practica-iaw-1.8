@@ -20,7 +20,8 @@ Para la realizacion de este apartado seguiremos los pasos detallados en la pract
 
 **Esta vez tenemos la siguiente IP elastica para nuestra maquina**
 
-  ![bNabA1Ww5l](https://github.com/user-attachments/assets/ec67113e-343c-4890-8086-6d0cb5e3d4e9)
+ ![3Ugc2bqAY4](https://github.com/user-attachments/assets/c90aa8c9-5321-4489-bda4-e508349b0f4f)
+
 
 [Practica-iaw-1.1](https://github.com/marinaferb92/practica-iaw-1.1/tree/main)
 
@@ -32,12 +33,14 @@ Una vez hecho esto nos aseguraremos de que la Pila LAMP esta funcionando correct
 
 - Verificaremos el estado de apache.
 
-  ![MMA4oyDdYV](https://github.com/user-attachments/assets/ef998254-f5f8-4bc1-b702-0e41621b0844)
+  
+  ![ZsjbEFIRRH](https://github.com/user-attachments/assets/d5eb21b5-3519-4787-8a35-d22fcda06cf1)
 
 
 - Entramos en mysql desde la terminal para ver que esta corriendo.
 
-  ![jYkXAri0jN](https://github.com/user-attachments/assets/c919d2a4-aaa8-4241-838d-698ef3685a2e)
+ 
+  ![1hifxKi9yV](https://github.com/user-attachments/assets/ad485e3a-5459-42d9-90f3-e8262e8222ec)
 
 
 
@@ -55,7 +58,8 @@ Para la realizacion de este apartado seguiremos los pasos detallados en la pract
 
 [Practica-iaw-1.5](https://github.com/marinaferb92/practica-iaw-1.5)
 
-[Script setup_letsencrypt_certificate.sh](scripts/setup_letsencrypt_certificate.sh)
+
+  ![PsKwRkTpSO](https://github.com/user-attachments/assets/ccac2524-4dba-4111-b9b2-f37b8518358b)
 
 
 
@@ -276,7 +280,19 @@ sudo systemctl status apache2
 
 #Comprobaciones 
 
+Entramos en el nombre de Dominio que hemos configurado para que sea nuestro Moodle
 
+  ![UdAT0t1pj7](https://github.com/user-attachments/assets/9d32d865-b9cf-492f-b373-95648833dfda)
+
+
+Nos logueamos con el Usuario administrador que hemos definido 
+
+  ![J2kiITOx8l](https://github.com/user-attachments/assets/d38087f3-31d0-4405-a635-4d86af219c46)
+
+
+Ya podemos comenzar a configurar nuestra plataforma con las asignaturas que queramos ponerles horarios, etc.
+
+  ![z6UtYIOlJU](https://github.com/user-attachments/assets/421cb4f3-776b-49b1-b8c9-67342ee8e7f8)
 
 
 
