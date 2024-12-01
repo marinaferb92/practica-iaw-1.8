@@ -75,3 +75,217 @@ El primer paso de nuestro script sera crear un archivo de variable ``` . env ```
 Configuraremos el script para que en caso de que haya errores en algun comando este se detenga ```-e```, ademas de que para que nos muestre los comando antes de ejecutarlos ```-x```.
 
 ``` set -ex ```
+
+### 3. Eliminamos las descargas previas de Moodle en /tmp
+
+Elminiamos cualquier descarga previa de Modlee en el directorio temporal, para que en  caso de que ejecutemos el script varias veces no queden archivos residuales de las descargas anteriores 
+
+
+```
+rm -rf /tmp/moodle-latest-405.tgz*
+```
+
+### 4. Descarga y descompresión de Moodle
+
+Descargamos la ultima versión estable de Moodle y la descomprimimos en el directorio temporal
+
+````
+
+wget https://download.moodle.org/download.php/direct/stable405/moodle-latest-405.tgz -P /tmp
+tar -xzf /tmp/moodle-latest-405.tgz -C /tmp
+
+````
+
+### 5. Preparación del directorio de Moodle
+
+Creamos el directorio donde se instalará Moodle, la variable *$MOODLE_DIRECTORY* estará definida en la en archivo `.env`.
+
+Eliminamos cualquier instalación anterior y movemos los archivos extraidos en */tmp/moodle* al directorio que hemos creado.
+
+````
+
+sudo mkdir -p $MOODLE_DIRECTORY
+
+sudo rm -rf $MOODLE_DIRECTORY/*
+
+mv /tmp/moodle/* "$MOODLE_DIRECTORY"
+
+````
+
+### 6. Configuración de permisos y seguridad
+
+Cambiamos la propiedad de todos los archivos de Moodle para que el usuario www-data (el usuario del servidor web Apache) tenga control sobre ellos y ajustamos los permisos para que el propietario tenga permisos completos y otros usuarios solo puedan leer y ejecutar los archivos.
+
+```
+chown -R www-data:www-data "$MOODLE_DIRECTORY"
+chmod -R 755 "$MOODLE_DIRECTORY"
+````
+
+### 7. Creación y configuración del archivo htaccess.
+
+Copiamos el archivo *.htaccess* que ha de tener esta estructura. 
+
+```
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+```
+Este archivo se utiliza para configurar la seguridad y el acceso a los archivos en el servidor web.
+
+```
+cp ../htaccess/.htaccess "$MOODLE_DIRECTORY"
+```
+
+
+### 8. Creación y configuración del archivo 000-default.conf
+
+Copia un archivo de configuración de Apache personalizado a la ubicación de configuracion determinada de Apache. Este archivo sirve para configurar el comportamiento de Apache a la hora de servir al sitio Moodle.
+
+```
+cp ../conf/000-default.conf /etc/apache2/sites-available/000-default.conf: 
+```
+
+### 9. Configuración de la base de datos de Moodle
+
+Creamos un directorio moodledata en /var/www, este se usa para almacenar los archivos subidos por los usuarios a Moodle y los datos importantes de Moodle. Antes de esto, habremos eliminado cualquier directorio moodledata previo para no crear conflicto.
+
+Cambiamos la propiedad del directorio a www-data y le damos permisos completos a este.
+
+```
+rm -rf /var/www/moodledata
+mkdir /var/www/moodledata
+chown -R www-data:www-data /var/www/moodledata
+chmod -R 755 /var/www/moodledata
+```
+
+### 10. Instalación de las extensiones PHP requeridas para Moodle
+
+Para que Moodle funcione correctamente habra que instalar unas extensiones adicionales de PHP:
+- php-curl: Extensión para interactuar con otros servidores usando el protocolo HTTP.
+- php-zip: Extensión para manejar archivos comprimidos.
+- php-xml: Extensión para procesar archivos XML.
+- php-mbstring: Extensión para manipulación de cadenas multibyte.
+- php-gd: Extensión para trabajar con imágenes.
+
+```
+sudo apt remove -y php-curl php-zip php-xml php-mbstring php-gd
+sudo apt install -y php-curl php-zip php-xml php-mbstring php-gd
+```
+
+Y tras esto reiniciaremos Apache para que carguen las nuevas extensiones.
+
+```
+systemctl restart apache2
+```
+
+### 11. Configuración de la base de datos MySQL
+
+Creamos la base de datos de Moodle, las variables estaran todas definidas en el archivo .env
+
+```
+mysql -u root <<< "DROP DATABASE IF EXISTS $MOODLE_DB_NAME"
+mysql -u root <<< "CREATE DATABASE $MOODLE_DB_NAME"
+
+```
+
+Después crearemos el usuario para la base de datos y le daremos todos los privilegios sobre la base de datos.
+
+```
+
+mysql -u root <<< "DROP USER IF EXISTS '$MOODLE_DB_USER'@'%'"
+mysql -u root <<< "CREATE USER '$MOODLE_DB_USER'@'%' IDENTIFIED BY '$MOODLE_DB_PASSWORD'"
+mysql -u root <<< "GRANT ALL PRIVILEGES ON $MOODLE_DB_NAME.* TO '$MOODLE_DB_USER'@'%'"
+
+```
+
+### 12. Instalación autmatica de Moodle 
+
+Crearemos un comando con el que se realizará la instalación de la base de datos sin que tengamos que intervenir completando los pasos.
+
+- *sudo -u www-data php "$MOODLE_DIRECTORY/admin/cli/install.php"*:
+Ejecuta el script install.php para realizar la instalación de Moodle en modo no interactivo.
+Pondremos todos los parámetros necesarios para la instalacion a continuación:
+ - *--wwwroot*: La URL de Moodle (con http o https).
+ - *--dataroot*: El directorio donde Moodle almacenará los archivos subidos (/var/www/moodledata).
+ - *--dbtype*: El tipo de base de datos.
+ - *--dbname*: El nombre de la base de datos.
+ - *--dbuser*: El usuario de la base de datos.
+ - *--dbpass*: La contraseña del usuario de la base de datos.
+ - *--adminuser*: El nombre del usuario administrador de Moodle.
+ - *--adminpass*: La contraseña del usuario administrador.
+
+```
+sudo -u www-data php "$MOODLE_DIRECTORY/admin/cli/install.php" \
+  --wwwroot="$MOODLE_URL" \
+  --dataroot="/var/www/moodledata" \
+  --dbtype="mysqli" \
+  --dbname="$MOODLE_DB_NAME" \
+  --dbuser="$MOODLE_DB_USER" \
+  --dbpass="$MOODLE_DB_PASSWORD" \
+  --dbhost="localhost" \
+  --fullname="Moodle Site" \
+  --shortname="Moodle" \
+  --adminuser="admin" \
+  --adminpass="adminpassword" \
+  --non-interactive \
+  --agree-license
+```
+
+### 13. Configuración de PHP max_input_vars
+
+Modificamos el archivo de configuración de PHP para establecer el valor de max_input_vars a 5000, para que PHP pueda manejar formularios grandes, como los formularios de configuración de Moodle.
+
+```
+sudo sed -i 's/^;*max_input_vars\s*=.*/max_input_vars = 5000/' /etc/php/8.3/apache2/php.ini
+sudo sed -i 's/^;*max_input_vars\s*=.*/max_input_vars = 5000/' /etc/php/8.3/cli/php.ini
+```
+
+Reiniciamos ApAche apra que se apliquen los cambios 
+
+```
+sudo systemctl restart apache2
+```` 
+
+### 14. Configurar la redirección HTTP a HTTPS
+
+Configuramos la redirección de HTTP a HTTPS en Apache, asegurando que todas las solicitudes de HTTP sean redirigidas a HTTPS
+
+````
+echo "Configurando redirección de HTTP a HTTPS"
+sudo sed -i '/<VirtualHost \*:80>/a Redirect permanent / https://'$MOODLE_URL'/' /etc/apache2/sites-available/000-default.conf
+```` 
+
+### 15. Verificación de configuración de Apache y estado del servicio
+
+Reiniciamos Apache para aplicar cualquier cambio de configuración relacionado con la redirección, SSL y las nuevas configuraciones de seguridad y verificamos que funciona todo correctamente.
+
+```
+sudo apachectl configtest
+
+sudo systemctl restart apache2
+
+sudo systemctl status apache2
+```
+
+#Comprobaciones 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
